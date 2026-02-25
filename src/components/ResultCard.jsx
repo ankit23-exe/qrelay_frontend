@@ -1,20 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './ResultCard.module.css';
 
 /* ── Countdown Timer ── */
-function CountdownTimer({ expiresAt }) {
-    const [timeLeft, setTimeLeft] = React.useState(0);
+function CountdownTimer({ expiresAt, onExpire }) {
+    const calcTimeLeft = () => Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+    const [timeLeft, setTimeLeft] = useState(calcTimeLeft);
 
-    React.useEffect(() => {
-        const calc = () => Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
-        setTimeLeft(calc());
+    useEffect(() => {
         const id = setInterval(() => {
-            const t = calc();
+            const t = calcTimeLeft();
             setTimeLeft(t);
-            if (t <= 0) clearInterval(id);
+            if (t <= 0) {
+                clearInterval(id);
+                if (onExpire) onExpire();
+            }
         }, 1000);
         return () => clearInterval(id);
-    }, [expiresAt]);
+    }, [expiresAt, onExpire]);
 
     const mins = String(Math.floor(timeLeft / 60)).padStart(2, '0');
     const secs = String(timeLeft % 60).padStart(2, '0');
@@ -29,7 +31,7 @@ function CountdownTimer({ expiresAt }) {
                 File expires in
             </div>
             <div className={styles.timerDigits} style={{ color }}>
-                {mins}:{secs}
+                {timeLeft > 0 ? `${mins}:${secs}` : "EXPIRED"}
             </div>
             <div className={styles.timerBar}>
                 <div
@@ -37,26 +39,16 @@ function CountdownTimer({ expiresAt }) {
                     style={{ width: `${pct}%`, background: color }}
                 />
             </div>
-            {timeLeft === 0 && (
-                <p className={styles.expiredNote}>This file has expired and been deleted.</p>
-            )}
         </div>
     );
 }
 
-/* ── Mock data for previewing without backend ── */
-export const MOCK_RESULT = {
-    originalName: 'demo-file.pdf',
-    code: 'ABC123',
-    qrCodeImage: 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=ABC123',
-    expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes from now
-};
-
 /* ── Result Card Component ── */
-export default function ResultCard({ result, onReset }) {
+export default function ResultCard({ result, collapsed, onToggle, onExpire }) {
     const [copied, setCopied] = useState(false);
 
-    const copyCode = () => {
+    const copyCode = (e) => {
+        e.stopPropagation(); // prevent collapsing when clicking copy
         if (!result) return;
         navigator.clipboard.writeText(result.code);
         setCopied(true);
@@ -65,64 +57,62 @@ export default function ResultCard({ result, onReset }) {
 
     if (!result) return null;
 
+    const isExpired = result.expiresAt <= Date.now();
+
     return (
-        <div className={styles.resultCard}>
-            <div className={styles.resultHeader}>
-                <div className={styles.successBadge}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    File uploaded!
-                </div>
-                <p className={styles.resultFileName}>
-                    <span>📄</span> {result.originalName}
-                </p>
-            </div>
-
-            <CountdownTimer expiresAt={result.expiresAt} />
-
-            <div className={styles.resultBody}>
-                <div className={styles.qrSection}>
-                    <p className={styles.sectionLabel}>Scan QR Code</p>
-                    <img src={result.qrCodeImage} alt="QR Code" className={styles.qrImage} />
-                </div>
-
-                <div className={styles.divider}>
-                    <span>or</span>
-                </div>
-
-                <div className={styles.codeSection}>
-                    <p className={styles.sectionLabel}>Share this code</p>
-                    <div className={styles.codeBox}>
-                        <span className={styles.code}>{result.code}</span>
-                        <button className={`${styles.copyBtn} ${copied ? styles.copied : ''}`} onClick={copyCode}>
-                            {copied ? (
-                                <>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                        <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                    Copied!
-                                </>
-                            ) : (
-                                <>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <rect x="9" y="9" width="13" height="13" rx="2" />
-                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                                    </svg>
-                                    Copy
-                                </>
-                            )}
-                        </button>
+        <div className={`${styles.resultCard} ${collapsed ? styles.isCollapsed : ''}`}>
+            <div className={styles.resultHeader} onClick={onToggle} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className={styles.headerInfo}>
+                    <div className={styles.successBadge}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        {isExpired ? 'Expired' : 'Uploaded'}
                     </div>
-                    <p className={styles.codeHint}>Recipient can enter this code on the Download page</p>
+                    <p className={styles.resultFileName}>
+                        <span>📄</span> {result.originalName}
+                    </p>
+                </div>
+                <div className={`${styles.chevron} ${!collapsed ? styles.chevronOpen : ''}`} style={{ transition: 'transform 0.3s', transform: !collapsed ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="6 9 12 15 18 9" />
+                    </svg>
                 </div>
             </div>
 
-            {onReset && (
-                <button className={styles.resetBtn} onClick={onReset}>
-                    Upload another file
-                </button>
+            <CountdownTimer expiresAt={result.expiresAt} onExpire={onExpire} />
+
+            {!collapsed && !isExpired && (
+                <div className={styles.resultBody}>
+                    <div className={styles.qrSection}>
+                        <p className={styles.sectionLabel}>Scan QR Code</p>
+                        <img src={result.qrCodeImage} alt="QR Code" className={styles.qrImage} />
+                    </div>
+
+                    <div className={styles.divider}>
+                        <span>or</span>
+                    </div>
+
+                    <div className={styles.codeSection}>
+                        <p className={styles.sectionLabel}>Share this code</p>
+                        <div className={styles.codeBox}>
+                            <span className={styles.code}>{result.code}</span>
+                            <button className={`${styles.copyBtn} ${copied ? styles.copied : ''}`} onClick={copyCode}>
+                                {copied ? 'Copied!' : 'Copy'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {!collapsed && isExpired && (
+                <div className={styles.resultBody}>
+                    <p className={styles.expiredText} style={{ color: 'var(--red)', textAlign: 'center', fontSize: '0.9rem', padding: '20px' }}>
+                        This file has expired and been deleted from the server.
+                    </p>
+                </div>
             )}
         </div>
     );
 }
+

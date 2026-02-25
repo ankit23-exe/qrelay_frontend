@@ -4,7 +4,8 @@ import ResultCard from './ResultCard.jsx';
 import styles from './UploadPage.module.css';
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
-const SESSION_KEY = 'qrelay_upload_result';
+const MAX_UPLOADS = 3;
+const SESSION_KEY = 'qrelay_upload_results';
 
 function formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`;
@@ -17,21 +18,25 @@ export default function UploadPage() {
   const [file, setFile] = useState(null);
   const [sizeError, setSizeError] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [result, setResult] = useState(null);
+  const [results, setResults] = useState([]);
+  const [expandedId, setExpandedId] = useState(null);
   const [error, setError] = useState('');
+  const [showUploadZone, setShowUploadZone] = useState(true);
   const fileInputRef = useRef(null);
 
-  // Restore result from sessionStorage on mount (survives refresh, not tab close)
+  // Restore results from sessionStorage on mount
   useEffect(() => {
     try {
       const saved = sessionStorage.getItem(SESSION_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Only restore if timer hasn't expired
-        if (parsed.expiresAt > Date.now()) {
-          setResult(parsed);
-        } else {
-          sessionStorage.removeItem(SESSION_KEY);
+        // Filter out those that were already expired when we last looked
+        // (though individual cards handle their own expiration timers)
+        const valid = parsed.filter(p => p.expiresAt > Date.now());
+        setResults(valid);
+        if (valid.length > 0) {
+          setShowUploadZone(valid.length < MAX_UPLOADS);
+          setExpandedId(valid[valid.length - 1].code);
         }
       }
     } catch {
@@ -39,10 +44,13 @@ export default function UploadPage() {
     }
   }, []);
 
+  const saveToSession = (newResults) => {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(newResults));
+  };
+
   const handleFile = (f) => {
     setSizeError('');
     setError('');
-    setResult(null);
     if (f.size > MAX_SIZE) {
       setSizeError(`"${f.name}" is ${formatBytes(f.size)} — exceeds the 10 MB limit.`);
       setFile(null);
@@ -80,10 +88,16 @@ export default function UploadPage() {
       const { data } = await API.post('/upload', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      const resultData = { ...data, expiresAt: Date.now() + data.expiresIn * 1000 };
-      setResult(resultData);
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(resultData));
+      const newResult = { ...data, expiresAt: Date.now() + data.expiresIn * 1000 };
+      const updatedResults = [...results, newResult];
+
+      setResults(updatedResults);
+      setExpandedId(newResult.code);
+      saveToSession(updatedResults);
+
       setFile(null);
+      setShowUploadZone(updatedResults.filter(r => r.expiresAt > Date.now()).length < MAX_UPLOADS);
+
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err) {
       setError(err?.response?.data?.error || 'Upload failed. Please try again.');
@@ -92,18 +106,40 @@ export default function UploadPage() {
     }
   };
 
-  const handleReset = () => {
-    setResult(null);
-    setFile(null);
-    setSizeError('');
-    setError('');
-    sessionStorage.removeItem(SESSION_KEY);
+  const activeCount = results.filter(r => r.expiresAt > Date.now()).length;
+  const canUploadMore = activeCount < MAX_UPLOADS;
+
+  const toggleExpand = (id) => {
+    setExpandedId(expandedId === id ? null : id);
+  };
+
+  const onExpire = (id) => {
+    // When a file expires, we just keep it but the card will show "EXPIRED"
+    // The clickable limit "activeCount" will automatically update because it uses Date.now()
   };
 
   return (
-    <div className={styles.page}>
-      {!result ? (
-        <>
+    <div className={styles.page} style={{ gap: '30px' }}>
+      {results.map((res) => (
+        <ResultCard
+          key={res.code}
+          result={res}
+          collapsed={expandedId !== res.code}
+          onToggle={() => toggleExpand(res.code)}
+          onExpire={() => onExpire(res.code)}
+        />
+      ))}
+
+      {showUploadZone && canUploadMore && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {results.length > 0 && (
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', marginBottom: '10px' }}>
+                Upload another file ({activeCount}/{MAX_UPLOADS})
+              </p>
+            </div>
+          )}
+
           <div
             className={`${styles.dropZone} ${dragging ? styles.dragging : ''} ${file ? styles.hasFile : ''}`}
             onDrop={onDrop}
@@ -161,10 +197,25 @@ export default function UploadPage() {
               </>
             )}
           </button>
-        </>
-      ) : (
-        <ResultCard result={result} onReset={handleReset} />
+        </div>
+      )}
+
+      {results.length > 0 && !showUploadZone && canUploadMore && (
+        <button
+          className={styles.uploadBtn}
+          style={{ background: 'transparent', border: '1px dashed var(--border)', color: 'var(--text-muted)' }}
+          onClick={() => setShowUploadZone(true)}
+        >
+          + Upload Another File ({activeCount}/{MAX_UPLOADS})
+        </button>
+      )}
+
+      {!canUploadMore && results.length >= MAX_UPLOADS && (
+        <p style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)', padding: '20px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface2)' }}>
+          Maximum limit reached ({MAX_UPLOADS}/3). Wait for a file to expire to upload more.
+        </p>
       )}
     </div>
   );
 }
+

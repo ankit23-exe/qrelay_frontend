@@ -1,9 +1,10 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import API from '../api';
 import ResultCard from './ResultCard.jsx';
 import styles from './UploadPage.module.css';
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+const SESSION_KEY = 'qrelay_upload_result';
 
 function formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`;
@@ -19,6 +20,24 @@ export default function UploadPage() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
+
+  // Restore result from sessionStorage on mount (survives refresh, not tab close)
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(SESSION_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Only restore if timer hasn't expired
+        if (parsed.expiresAt > Date.now()) {
+          setResult(parsed);
+        } else {
+          sessionStorage.removeItem(SESSION_KEY);
+        }
+      }
+    } catch {
+      sessionStorage.removeItem(SESSION_KEY);
+    }
+  }, []);
 
   const handleFile = (f) => {
     setSizeError('');
@@ -61,7 +80,9 @@ export default function UploadPage() {
       const { data } = await API.post('/upload', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setResult({ ...data, expiresAt: Date.now() + data.expiresIn * 1000 });
+      const resultData = { ...data, expiresAt: Date.now() + data.expiresIn * 1000 };
+      setResult(resultData);
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(resultData));
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err) {
@@ -76,6 +97,7 @@ export default function UploadPage() {
     setFile(null);
     setSizeError('');
     setError('');
+    sessionStorage.removeItem(SESSION_KEY);
   };
 
   return (

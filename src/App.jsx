@@ -29,8 +29,9 @@ export default function App() {
         <MouseFollower />
         <div className={styles.sideGlowLeft} />
         <div className={styles.sideGlowRight} />
-        <div className={styles.orb1} />
-        {/* <div className={styles.orb2} /> */}
+        <div className={styles.orb3} />
+        {/* <div className={styles.orb1} />
+        <div className={styles.orb2} /> */}
       </div>
     </BrowserRouter>
   );

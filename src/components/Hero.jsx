@@ -12,7 +12,7 @@ export default function Hero() {
                 Share files <span className={styles.heroAccent}>instantly</span>
             </h1>
             <p className={styles.heroSub}>
-                Drop a file, get a QR code &amp; short code. No sign-up needed.
+                Drop a file, get a QR code. Scan and download.
             </p>
         </div>
     );

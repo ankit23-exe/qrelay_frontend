@@ -51,7 +51,7 @@
 
 /* ── Input row ── */
 .inputRow {
-  padding: 20px 24px 0;
+  padding: 20px 24px 22px;
   display: flex;
   gap: 10px;
 }
@@ -113,7 +113,7 @@
 
 /* ── Error ── */
 .errorBox {
-  margin: 14px 24px 0;
+  margin: 0 24px 20px;
   padding: 10px 14px;
   border-radius: var(--radius-sm);
   background: rgba(239, 68, 68, 0.08);
@@ -127,7 +127,7 @@
 
 /* ── File Card ── */
 .fileCard {
-  margin: 16px 24px 24px;
+  margin: 0 24px 24px;
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -252,14 +252,16 @@
 .spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255,255,255,0.3);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: #fff;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ── Hint ── */

@@ -101,6 +101,7 @@ export default function ResultCard({ result, collapsed, onToggle, onExpire }) {
                                 {copied ? 'Copied!' : 'Copy'}
                             </button>
                         </div>
+                        <p className={styles.codeHint}>Recipient can enter this code on the Download page</p>
                     </div>
                 </div>
             )}

@@ -94,7 +94,8 @@
 }
 
 .codeInput::placeholder {
-  color: var(--border);
+  /* color: var(--border); */
+  color: rgbA(90, 90, 90, 0.3);
   font-size: 1.1rem;
   letter-spacing: 0.15em;
 }

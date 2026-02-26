@@ -25,6 +25,14 @@
   gap: 14px;
 }
 
+@media (max-width: 440px) {
+  .cardHeader {
+    padding: 16px;
+    gap: 10px;
+  }
+}
+
+
 .headerIcon {
   width: 44px;
   height: 44px;
@@ -55,6 +63,18 @@
   display: flex;
   gap: 10px;
 }
+
+@media (max-width: 440px) {
+  .inputRow {
+    padding: 16px;
+    flex-direction: column;
+  }
+
+  .checkBtn {
+    justify-content: center;
+  }
+}
+
 
 .codeInput {
   flex: 1;

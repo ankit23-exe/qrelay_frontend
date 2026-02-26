@@ -4,7 +4,7 @@ import ResultCard from './ResultCard.jsx';
 import styles from './UploadPage.module.css';
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
-const MAX_UPLOADS = 3;
+const MAX_UPLOADS = 1;
 const SESSION_KEY = 'qrelay_upload_results';
 
 function formatBytes(bytes) {
@@ -135,7 +135,7 @@ export default function UploadPage() {
           {results.length > 0 && (
             <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', marginBottom: '10px' }}>
-                Upload another file ({activeCount}/{MAX_UPLOADS})
+                Upload a new file
               </p>
             </div>
           )}
@@ -206,15 +206,11 @@ export default function UploadPage() {
           style={{ background: 'transparent', border: '1px dashed var(--border)', color: 'var(--text-muted)' }}
           onClick={() => setShowUploadZone(true)}
         >
-          + Upload Another File ({activeCount}/{MAX_UPLOADS})
+          + Upload New File
         </button>
       )}
 
-      {!canUploadMore && results.length >= MAX_UPLOADS && (
-        <p style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)', padding: '20px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface2)' }}>
-          Maximum limit reached ({MAX_UPLOADS}/3). Wait for a file to expire to upload more.
-        </p>
-      )}
+
     </div>
   );
 }

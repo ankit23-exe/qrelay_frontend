@@ -2,10 +2,11 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    background: rgba(10, 10, 15, 0.85);
+    background: var(--bg);
+    opacity: 0.98;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(42, 42, 61, 0.6);
+    border-bottom: 1px solid var(--border);
 }
 
 .headerInner {
@@ -16,6 +17,20 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+}
+
+@media (max-width: 480px) {
+    .headerInner {
+        padding: 0 12px;
+    }
+
+    .logoText {
+        font-size: 1.1rem;
+    }
+
+    .nav {
+        display: none !important;
+    }
 }
 
 /* ── Logo ── */
@@ -67,4 +82,29 @@
     color: var(--text);
     background: var(--surface2);
     font-weight: 600;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.themeToggle {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.themeToggle:hover {
+    border-color: var(--accent);
+    color: var(--accent-light);
+    transform: scale(1.05);
 }

@@ -26,19 +26,10 @@ function CountdownTimer({ expiresAt, onExpire }) {
 
     return (
         <div className={styles.timerWrapper}>
-            <div className={styles.timerLabel}>
-                <span className={styles.timerIcon}>⏱</span>
-                File expires in
-            </div>
-            <div className={styles.timerDigits} style={{ color }}>
+            <span className={styles.timerLabel}>Expires in:</span>
+            <span className={styles.timerDigits} style={{ color }}>
                 {timeLeft > 0 ? `${mins}:${secs}` : "EXPIRED"}
-            </div>
-            <div className={styles.timerBar}>
-                <div
-                    className={styles.timerBarFill}
-                    style={{ width: `${pct}%`, background: color }}
-                />
-            </div>
+            </span>
         </div>
     );
 }
@@ -80,8 +71,6 @@ export default function ResultCard({ result, collapsed, onToggle, onExpire }) {
                 </div>
             </div>
 
-            <CountdownTimer expiresAt={result.expiresAt} onExpire={onExpire} />
-
             {!collapsed && !isExpired && (
                 <div className={styles.resultBody}>
                     <div className={styles.qrSection}>
@@ -103,6 +92,8 @@ export default function ResultCard({ result, collapsed, onToggle, onExpire }) {
                         </div>
                         <p className={styles.codeHint}>Recipient can enter this code on the Download page</p>
                     </div>
+
+                    <CountdownTimer expiresAt={result.expiresAt} onExpire={onExpire} />
                 </div>
             )}
 
